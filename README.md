@@ -1,10 +1,10 @@
-# napari-pims
+# napari-pims-bioformats
 
-[![License](https://img.shields.io/pypi/l/napari-pims.svg?color=green)](https://github.com/napari/napari-pims/raw/master/LICENSE)
-[![PyPI](https://img.shields.io/pypi/v/napari-pims.svg?color=green)](https://pypi.org/project/napari-pims)
-[![Python Version](https://img.shields.io/pypi/pyversions/napari-pims.svg?color=green)](https://python.org)
-[![tests](https://github.com/tlambert03/napari-pims/workflows/tests/badge.svg)](https://github.com/tlambert03/napari-pims/actions)
-[![codecov](https://codecov.io/gh/tlambert03/napari-pims/branch/master/graph/badge.svg)](https://codecov.io/gh/tlambert03/napari-pims)
+[![License](https://img.shields.io/pypi/l/napari-pims-bioformats.svg?color=green)](https://github.com/napari/napari-pims-bioformats/raw/master/LICENSE)
+[![PyPI](https://img.shields.io/pypi/v/napari-pims-bioformats.svg?color=green)](https://pypi.org/project/napari-pims-bioformats)
+[![Python Version](https://img.shields.io/pypi/pyversions/napari-pims-bioformats.svg?color=green)](https://python.org)
+[![tests](https://github.com/tlambert03/napari-pims-bioformats/workflows/tests/badge.svg)](https://github.com/tlambert03/napari-pims-bioformats/actions)
+[![codecov](https://codecov.io/gh/tlambert03/napari-pims-bioformats/branch/master/graph/badge.svg)](https://codecov.io/gh/tlambert03/napari-pims-bioformats)
 
 PIMS plugin for napari
 
@@ -22,9 +22,9 @@ https://napari.org/docs/plugins/index.html
 
 ## Installation
 
-You can install `napari-pims` via [pip]:
+You can install `napari-pims-bioformats` via [pip]:
 
-    pip install napari-pims
+    pip install napari-pims-bioformats
 
 ## Contributing
 
@@ -34,7 +34,7 @@ the coverage at least stays the same before you submit a pull request.
 ## License
 
 Distributed under the terms of the [BSD-3] license,
-"napari-pims" is free and open source software
+"napari-pims-bioformats" is free and open source software
 
 ## Issues
 
@@ -50,7 +50,7 @@ If you encounter any problems, please [file an issue] along with a detailed desc
 [Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0
 [Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt
 [cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin
-[file an issue]: https://github.com/tlambert03/napari-pims/issues
+[file an issue]: https://github.com/tlambert03/napari-pims-bioformats/issues
 [napari]: https://github.com/napari/napari
 [tox]: https://tox.readthedocs.io/en/latest/
 [pip]: https://pypi.org/project/pip/
