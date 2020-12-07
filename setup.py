@@ -22,15 +22,15 @@ with open('requirements.txt') as f:
 
 
 # https://github.com/pypa/setuptools_scm
-use_scm = {"write_to": "napari_pims/_version.py"}
+use_scm = {"write_to": "napari_pims_bioformats/_version.py"}
 
 setup(
-    name='napari-pims',
+    name='napari-pims-bioformats',
     author='Talley Lambert',
     author_email='talley.lambert@gmail.com',
     license='BSD-3',
-    url='https://github.com/tlambert03/napari-pims',
-    description='PIMS plugin for napari',
+    url='https://github.com/tlambert03/napari-pims-bioformats',
+    description='PIMS bioformats plugin for napari',
     long_description=read('README.md'),
     long_description_content_type='text/markdown',
     packages=find_packages(),
@@ -53,7 +53,7 @@ setup(
     ],
     entry_points={
         'napari.plugin': [
-            'pims = napari_pims',
+            'pims = napari_pims_bioformats',
         ],
     },
 )
