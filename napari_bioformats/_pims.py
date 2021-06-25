@@ -1,6 +1,7 @@
 from napari_plugin_engine import napari_hook_implementation
 from pims.bioformats import BioformatsReader
 import numpy as np
+import pathlib
 
 # fmt: off
 SUPPORTED_FORMATS = (
@@ -30,6 +31,18 @@ SUPPORTED_FORMATS = (
 # fmt: on
 
 
+_PRIMARY_COLORS = {
+    (1.0, 0.0, 0.0): "red",
+    (0.0, 1.0, 0.0): "green",
+    (0.0, 0.0, 1.0): "blue",
+    (0.0, 1.0, 1.0): "cyan",
+    (1.0, 1.0, 0.0): "yellow",
+    (1.0, 0.0, 1.0): "magenta",
+    (0.0, 0.0, 0.0): "black",
+    (1.0, 1.0, 1.0): "gray",
+}
+
+
 @napari_hook_implementation(trylast=True)
 def napari_get_reader(path):
     """A basic implementation of the napari_get_reader hook specification.
@@ -45,17 +58,13 @@ def napari_get_reader(path):
         If the path is a recognized format, return a function that accepts the
         same path or list of paths, and returns a list of layer data tuples.
     """
-    if isinstance(path, str) and path.endswith(SUPPORTED_FORMATS):
-        return reader_function
+    if isinstance(path, (str, pathlib.Path)) and str(path).endswith(SUPPORTED_FORMATS):
+        return read_bioformats
     return None
 
 
-def reader_function(path):
+def read_bioformats(path, split_channels=True):
     """Take a path or list of paths and return a list of LayerData tuples.
-
-    Readers are expected to return data as a list of tuples, where each tuple
-    is (data, [add_kwargs, [layer_type]]), "add_kwargs" and "layer_type" are
-    both optional.
 
     Parameters
     ----------
@@ -75,26 +84,39 @@ def reader_function(path):
 
     # load all files into array
     reader = BioformatsReader(path, read_mode="jpype")
+
+    # The bundle_axes property defines which axes will be present in a single frame.
+    # The frame_shape property is changed accordingly:
     axes = [ax for ax in "tczyx" if ax in reader.axes]
     reader.bundle_axes = axes
-    try:
-        channel_axis = axes.index("c")
-    except ValueError:
-        channel_axis = None
 
     # stack arrays into single array
-    data = np.asarray(np.squeeze(reader[0]))
     try:
-        dz = reader.metadata.PixelsPhysicalSizeZ(0)
-        dx = reader.metadata.PixelsPhysicalSizeX(0)
-        scale = [(np.round(dz / dx, 4) if ax == "z" else 1) for ax in axes if ax != "c"]
+        _sizes = {
+            "y": reader.metadata.PixelsPhysicalSizeY(0),
+            "x": reader.metadata.PixelsPhysicalSizeX(0),
+            "z": reader.metadata.PixelsPhysicalSizeZ(0),
+            "t": 1,
+            "c": 1,
+        }
+        _ax = [x for x in axes if x != "c"] if split_channels else axes
+        scale = [round(_sizes[ax], 5) for ax in _ax]
     except AttributeError:
         scale = None
 
     meta = {
-        "channel_axis": channel_axis,
+        "channel_axis": axes.index("c") if split_channels and "c" in axes else None,
         "name": str(reader.metadata.ImageName(0)),
         "scale": scale,
     }
+    if meta.get("channel_axis") and reader.colors:
+        meta["colormap"] = [_PRIMARY_COLORS.get(c) for c in reader.colors]
 
-    return [(data, meta)]
+    def retrieve_ome_metadata():
+        import ome_types
+
+        return ome_types.from_xml(str(reader._metadata.dumpXML()))
+
+    meta["metadata"] = retrieve_ome_metadata
+
+    return [(reader[0], meta)]
