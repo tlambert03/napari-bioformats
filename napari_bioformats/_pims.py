@@ -1,6 +1,8 @@
 from napari_plugin_engine import napari_hook_implementation
 from pims.bioformats import BioformatsReader
 import numpy as np
+import pathlib
+import ome_types
 
 # fmt: off
 SUPPORTED_FORMATS = (
@@ -45,7 +47,7 @@ def napari_get_reader(path):
         If the path is a recognized format, return a function that accepts the
         same path or list of paths, and returns a list of layer data tuples.
     """
-    if isinstance(path, str) and path.endswith(SUPPORTED_FORMATS):
+    if isinstance(path, (str, pathlib.Path)) and str(path).endswith(SUPPORTED_FORMATS):
         return reader_function
     return None
 
@@ -96,5 +98,11 @@ def reader_function(path):
         "name": str(reader.metadata.ImageName(0)),
         "scale": scale,
     }
+    try:
+        meta["metadata"] = ome_types.from_xml(str(reader._metadata.dumpXML()))
+    except Exception as e:
+        import warnings
+
+        warnings.warn(f"failed to parse XML metadata: {e}")
 
     return [(data, meta)]
