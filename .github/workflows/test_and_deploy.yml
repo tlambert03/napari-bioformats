@@ -54,7 +54,7 @@ jobs:
         run: |
           conda install openjdk
           python -m pip install -U pip
-          python -m pip install .
+          python -m pip install .[testing]
 
       - name: Test
         run: pytest -v --color=yes --cov=napari_bioformats --cov-report=xml
