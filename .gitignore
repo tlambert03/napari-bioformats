@@ -77,4 +77,4 @@ target/
 
 # written by setuptools_scm
 */_version.py
-test_data/
+sample_data/

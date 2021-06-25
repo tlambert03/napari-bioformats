@@ -10,7 +10,7 @@ FILES = [
     "10-31_E1.zip",  # Olympus Fluoview TIFF
     "wtembryo.zip",  # quicktime
 ]
-DEST_DIR = "test_data"
+DEST_DIR = "sample_data"
 
 
 def download_url(url, target_dir=".", chunk_size=128):

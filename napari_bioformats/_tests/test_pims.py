@@ -7,7 +7,7 @@ from napari_bioformats import napari_get_reader
 from ome_types import OME
 
 root = Path(napari_bioformats.__file__).parent.parent
-data = root / "test_data"
+data = root / "sample_data"
 
 
 @pytest.mark.parametrize("fname", data.iterdir(), ids=lambda x: x.stem)
