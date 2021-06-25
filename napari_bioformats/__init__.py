@@ -3,6 +3,6 @@ try:
 except ImportError:
     __version__ = "unknown"
 
-from ._pims import napari_get_reader
+from ._pims import napari_get_reader, read_bioformats
 
-__all__ = ["napari_get_reader"]
+__all__ = ["napari_get_reader", "read_bioformats"]
