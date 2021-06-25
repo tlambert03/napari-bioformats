@@ -107,9 +107,10 @@ def read_bioformats(path, split_channels=True):
     meta = {
         "channel_axis": axes.index("c") if split_channels and "c" in axes else None,
         "name": str(reader.metadata.ImageName(0)),
-        "colormap": [_PRIMARY_COLORS.get(c) for c in reader.colors],
         "scale": scale,
     }
+    if meta.get("channel_axis") and reader.colors:
+        meta["colormap"] = [_PRIMARY_COLORS.get(c) for c in reader.colors]
 
     def retrieve_ome_metadata():
         import ome_types
