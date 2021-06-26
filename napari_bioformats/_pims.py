@@ -1,7 +1,6 @@
+from pathlib import Path
+
 from napari_plugin_engine import napari_hook_implementation
-from pims.bioformats import BioformatsReader
-import numpy as np
-import pathlib
 
 # fmt: off
 SUPPORTED_FORMATS = (
@@ -58,7 +57,7 @@ def napari_get_reader(path):
         If the path is a recognized format, return a function that accepts the
         same path or list of paths, and returns a list of layer data tuples.
     """
-    if isinstance(path, (str, pathlib.Path)) and str(path).endswith(SUPPORTED_FORMATS):
+    if isinstance(path, (str, Path)) and str(path).endswith(SUPPORTED_FORMATS):
         return read_bioformats
     return None
 
@@ -81,9 +80,27 @@ def read_bioformats(path, split_channels=True):
         Both "meta", and "layer_type" are optional. napari will default to
         layer_type=="image" if not provided
     """
+    from jpype import JVMNotFoundException
+    from pims.bioformats import BioformatsReader
+    from ._jdk import _has_jar, download_loci_jar
+
+    if not _has_jar():
+        if not download_loci_jar():
+            return
 
     # load all files into array
-    reader = BioformatsReader(path, read_mode="jpype")
+    try:
+        reader = BioformatsReader(path, read_mode="jpype")
+    except JVMNotFoundException as e:
+        from ._jdk import _show_jdk_message
+
+        if _show_jdk_message():
+            return read_bioformats(path, split_channels=split_channels)
+        else:
+            raise JVMNotFoundException(
+                "napari-bioformats requires (but could not find) a java virtual machine. "
+                "please install java and try again."
+            ) from e
 
     # The bundle_axes property defines which axes will be present in a single frame.
     # The frame_shape property is changed accordingly:
