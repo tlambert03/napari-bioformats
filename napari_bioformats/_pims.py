@@ -62,6 +62,27 @@ def napari_get_reader(path):
     return None
 
 
+def _has_jar():
+    from pims.bioformats import _gen_jar_locations
+
+    for loc in _gen_jar_locations():
+        jar = Path(loc) / "loci_tools.jar"
+        if jar.is_file():
+            return True
+    return False
+
+
+def download_jar():
+    try:
+        from ._dialogs import download_loci_jar
+
+        return download_loci_jar("latest")
+    except ImportError:
+        from pims.bioformats import download_jar
+
+        return download_jar("latest")
+
+
 def read_bioformats(path, split_channels=True):
     """Take a path or list of paths and return a list of LayerData tuples.
 
@@ -82,25 +103,27 @@ def read_bioformats(path, split_channels=True):
     """
     from jpype import JVMNotFoundException
     from pims.bioformats import BioformatsReader
-    from ._jdk import _has_jar, download_loci_jar
 
     if not _has_jar():
-        if not download_loci_jar():
+        if not download_jar():
             return
 
     # load all files into array
     try:
         reader = BioformatsReader(path, read_mode="jpype")
     except JVMNotFoundException as e:
-        from ._jdk import _show_jdk_message
+        try:
+            from ._dialogs import _show_jdk_message
 
-        if _show_jdk_message():
-            return read_bioformats(path, split_channels=split_channels)
-        else:
-            raise JVMNotFoundException(
-                "napari-bioformats requires (but could not find) a java virtual machine. "
-                "please install java and try again."
-            ) from e
+            # will return true if the dialog successfully installed Java
+            if _show_jdk_message():
+                return read_bioformats(path, split_channels=split_channels)
+        except ImportError:
+            pass
+        raise JVMNotFoundException(
+            "napari-bioformats requires (but could not find) a java virtual machine. "
+            "please install java and try again."
+        ) from e
 
     # The bundle_axes property defines which axes will be present in a single frame.
     # The frame_shape property is changed accordingly:

@@ -83,14 +83,6 @@ def _show_jdk_message():
     return False
 
 
-def _has_jar():
-    for loc in _gen_jar_locations():
-        jar = Path(loc) / "loci_tools.jar"
-        if jar.is_file():
-            return True
-    return False
-
-
 def download_loci_jar(v="latest"):
     import hashlib
     from urllib.request import urlopen
