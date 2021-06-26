@@ -1,7 +1,6 @@
+from pathlib import Path
+
 from napari_plugin_engine import napari_hook_implementation
-from pims.bioformats import BioformatsReader
-import numpy as np
-import pathlib
 
 # fmt: off
 SUPPORTED_FORMATS = (
@@ -58,9 +57,30 @@ def napari_get_reader(path):
         If the path is a recognized format, return a function that accepts the
         same path or list of paths, and returns a list of layer data tuples.
     """
-    if isinstance(path, (str, pathlib.Path)) and str(path).endswith(SUPPORTED_FORMATS):
+    if isinstance(path, (str, Path)) and str(path).endswith(SUPPORTED_FORMATS):
         return read_bioformats
     return None
+
+
+def _has_jar():
+    from pims.bioformats import _gen_jar_locations
+
+    for loc in _gen_jar_locations():
+        jar = Path(loc) / "loci_tools.jar"
+        if jar.is_file():
+            return True
+    return False
+
+
+def download_jar():
+    try:
+        from ._dialogs import download_loci_jar
+
+        return download_loci_jar("latest")
+    except ImportError:
+        from pims.bioformats import download_jar
+
+        return download_jar("latest")
 
 
 def read_bioformats(path, split_channels=True):
@@ -81,9 +101,29 @@ def read_bioformats(path, split_channels=True):
         Both "meta", and "layer_type" are optional. napari will default to
         layer_type=="image" if not provided
     """
+    from jpype import JVMNotFoundException
+    from pims.bioformats import BioformatsReader
+
+    if not _has_jar():
+        if not download_jar():
+            return
 
     # load all files into array
-    reader = BioformatsReader(path, read_mode="jpype")
+    try:
+        reader = BioformatsReader(path, read_mode="jpype")
+    except JVMNotFoundException as e:
+        try:
+            from ._dialogs import _show_jdk_message
+
+            # will return true if the dialog successfully installed Java
+            if _show_jdk_message():
+                return read_bioformats(path, split_channels=split_channels)
+        except ImportError:
+            pass
+        raise JVMNotFoundException(
+            "napari-bioformats requires (but could not find) a java virtual machine. "
+            "please install java and try again."
+        ) from e
 
     # The bundle_axes property defines which axes will be present in a single frame.
     # The frame_shape property is changed accordingly:
