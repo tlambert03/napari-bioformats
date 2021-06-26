@@ -1,11 +1,10 @@
 """Routines for finding java and loci_tools"""
 import os
 from pathlib import Path
-from PyQt5.QtWidgets import QPushButton, QVBoxLayout
 
 from pims.bioformats import _gen_jar_locations
 from qtpy.QtCore import QProcess, QProcessEnvironment
-from qtpy.QtWidgets import QDialog, QTextEdit
+from qtpy.QtWidgets import QDialog, QPushButton, QTextEdit, QVBoxLayout
 
 
 def _get_current_window():

@@ -1,8 +1,14 @@
-from PyQt5.QtGui import QValidator
-from PyQt5.QtWidgets import QVBoxLayout
-from qtpy.QtCore import QFile, QUrl, QEventLoop
+from qtpy.QtCore import QEventLoop, QFile, QUrl
+from qtpy.QtGui import QValidator
 from qtpy.QtNetwork import QNetworkAccessManager, QNetworkRequest
-from qtpy.QtWidgets import QDialog, QHBoxLayout, QLabel, QProgressBar, QPushButton
+from qtpy.QtWidgets import (
+    QDialog,
+    QHBoxLayout,
+    QLabel,
+    QProgressBar,
+    QPushButton,
+    QVBoxLayout,
+)
 
 
 class DownloadDialog(QDialog):
