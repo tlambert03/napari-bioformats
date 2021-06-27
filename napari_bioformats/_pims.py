@@ -1,4 +1,6 @@
 from pathlib import Path
+from functools import lru_cache
+import ome_types
 
 from napari_plugin_engine import napari_hook_implementation
 
@@ -104,9 +106,8 @@ def read_bioformats(path, split_channels=True, java_memory="1024m"):
     import jpype
     from pims.bioformats import BioformatsReader
 
-    if not _has_jar():
-        if not download_jar():
-            return
+    if not _has_jar() and not download_jar():
+        return
 
     # load all files into array
     try:
@@ -138,6 +139,7 @@ def read_bioformats(path, split_channels=True, java_memory="1024m"):
     reader.rdr.close()
     reader.rdr.setMetadataStore(_meta)
     reader.rdr.setId(reader.filename)
+    xml = str(_meta.dumpXML())
 
     try:
         _sizes = {
@@ -154,17 +156,12 @@ def read_bioformats(path, split_channels=True, java_memory="1024m"):
 
     meta = {
         "channel_axis": axes.index("c") if split_channels and "c" in axes else None,
-        "name": str(reader.metadata.ImageName(0)),
+        "name": str(_meta.getImageName(0)),
         "scale": scale,
     }
     if meta.get("channel_axis") and reader.colors:
         meta["colormap"] = [_PRIMARY_COLORS.get(c) for c in reader.colors]
 
-    def retrieve_ome_metadata():
-        import ome_types
-
-        return ome_types.from_xml(str(_meta.dumpXML()))
-
-    meta["metadata"] = retrieve_ome_metadata
+    meta["metadata"] = lru_cache(maxsize=1)(lambda: ome_types.from_xml(xml))
 
     return [(reader[0], meta)]
