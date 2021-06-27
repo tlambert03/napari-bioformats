@@ -83,7 +83,7 @@ def download_jar():
         return download_jar("latest")
 
 
-def read_bioformats(path, split_channels=True):
+def read_bioformats(path, split_channels=True, java_memory="1024m"):
     """Take a path or list of paths and return a list of LayerData tuples.
 
     Parameters
@@ -101,7 +101,7 @@ def read_bioformats(path, split_channels=True):
         Both "meta", and "layer_type" are optional. napari will default to
         layer_type=="image" if not provided
     """
-    from jpype import JVMNotFoundException
+    import jpype
     from pims.bioformats import BioformatsReader
 
     if not _has_jar():
@@ -110,8 +110,10 @@ def read_bioformats(path, split_channels=True):
 
     # load all files into array
     try:
-        reader = BioformatsReader(path, read_mode="jpype")
-    except JVMNotFoundException as e:
+        reader = BioformatsReader(
+            path, java_memory=java_memory, meta=False, read_mode="jpype"
+        )
+    except jpype.JVMNotFoundException as e:
         try:
             from ._dialogs import _show_jdk_message
 
@@ -120,7 +122,7 @@ def read_bioformats(path, split_channels=True):
                 return read_bioformats(path, split_channels=split_channels)
         except ImportError:
             pass
-        raise JVMNotFoundException(
+        raise jpype.JVMNotFoundException(
             "napari-bioformats requires (but could not find) a java virtual machine. "
             "please install java and try again."
         ) from e
@@ -128,14 +130,20 @@ def read_bioformats(path, split_channels=True):
     # The bundle_axes property defines which axes will be present in a single frame.
     # The frame_shape property is changed accordingly:
     axes = [ax for ax in "tczyx" if ax in reader.axes]
+    # stack arrays into single array
     reader.bundle_axes = axes
 
-    # stack arrays into single array
+    loci = jpype.JPackage("loci")
+    _meta = loci.formats.MetadataTools.createOMEXMLMetadata()
+    reader.rdr.close()
+    reader.rdr.setMetadataStore(_meta)
+    reader.rdr.setId(reader.filename)
+
     try:
         _sizes = {
-            "y": reader.metadata.PixelsPhysicalSizeY(0),
-            "x": reader.metadata.PixelsPhysicalSizeX(0),
-            "z": reader.metadata.PixelsPhysicalSizeZ(0),
+            "z": _meta.getPixelsPhysicalSizeZ(0).value(),
+            "y": _meta.getPixelsPhysicalSizeY(0).value(),
+            "x": _meta.getPixelsPhysicalSizeX(0).value(),
             "t": 1,
             "c": 1,
         }
@@ -155,7 +163,7 @@ def read_bioformats(path, split_channels=True):
     def retrieve_ome_metadata():
         import ome_types
 
-        return ome_types.from_xml(str(reader._metadata.dumpXML()))
+        return ome_types.from_xml(str(_meta.dumpXML()))
 
     meta["metadata"] = retrieve_ome_metadata
 
