@@ -12,6 +12,33 @@ Bioformats plugin for napari using
 
 ----------------------------------
 
+## Use this plugin as a fallback!
+
+Anyone coming to napari from the Fiji/ImageJ world will likely be aware of the 
+_incredible_ [Bio-Formats](https://docs.openmicroscopy.org/bio-formats/6.6.1/index.html)
+library.  A heroic effort, built over years, to read 
+[more than a 100 file formats](https://docs.openmicroscopy.org/bio-formats/6.6.1/supported-formats.html).  Naturally, we want some of that goodness for `napari` ... hence this plugin.
+
+**However:** it's important to note that this plugin _still_
+requires having a java runtime engine installed.  This is easy enough to do
+(the plugin will ask to install it for you if you're in a `conda` environment), but
+it definitely makes for a more complicated environment setup, it's not very
+"pythonic", and the performance will likely not feel as snappy as a native "pure"
+python modulel.
+
+So, before you reflexively install this plugin to fill that bio-formats
+sized hole in your python heart, consider trying some of the other pure-python
+plugins designed to read your format of interest:
+
+- **Zeiss (.czi)**: [napari-aicsimageio](https://github.com/AllenCellModeling/napari-aicsimageio), [napari-czifile2](https://github.com/BodenmillerGroup/napari-czifile2)
+- **Nikon (.nd2)**: [napari-nikon-nd2](https://github.com/cwood1967/napari-nikon-nd2), [nd2-dask](https://github.com/DragaDoncila/nd2-dask)
+- **Leica (.lif)**: [napari-aicsimageio](https://github.com/AllenCellModeling/napari-aicsimageio)
+- **Olympus (.oif)**: no plugin?  (but see [oiffile](https://pypi.org/project/oiffile/) )
+- **DeltaVision (.dv, .mrc)**: [napari-dv](https://github.com/tlambert03/napari-dv)
+
+> *if you have a pure-python reader for a bio-formats-supported file format that
+you'd like to see added to this list, please open an issue*
+
 ## Installation
 
 The easiest way to install `napari-bioformats` is via [conda], from the
