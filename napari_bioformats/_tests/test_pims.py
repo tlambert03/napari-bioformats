@@ -20,4 +20,4 @@ def test_reader(fname, monkeypatch):
     assert callable(reader)
     ((data, meta),) = reader(fname)
     assert isinstance(data, np.ndarray)
-    assert isinstance(meta["metadata"](), OME)
+    assert isinstance(meta["metadata"]['ome_types'](), OME)
