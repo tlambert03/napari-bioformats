@@ -157,8 +157,6 @@ def read_bioformats(path, split_channels=True):
 
         return ome_types.from_xml(str(reader._metadata.dumpXML()))
 
-    from ome_types._napari_plugin import METADATA_KEY
-
-    meta["metadata"] = {METADATA_KEY: retrieve_ome_metadata}
+    meta["metadata"] = {"ome_types": retrieve_ome_metadata}
 
     return [(reader[0], meta)]
