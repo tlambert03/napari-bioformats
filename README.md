@@ -24,7 +24,7 @@ requires having a java runtime engine installed.  This is easy enough to do
 (the plugin will ask to install it for you if you're in a `conda` environment), but
 it definitely makes for a more complicated environment setup, it's not very
 "pythonic", and the performance will likely not feel as snappy as a native "pure"
-python modulel.
+python module.
 
 So, before you reflexively install this plugin to fill that bio-formats
 sized hole in your python heart, consider trying some of the other pure-python
