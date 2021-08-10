@@ -1,3 +1,4 @@
+from contextlib import suppress
 from functools import lru_cache
 from pathlib import Path
 
@@ -30,18 +31,6 @@ SUPPORTED_FORMATS = (
     '.msr', '.xqf'
 )
 # fmt: on
-
-
-_PRIMARY_COLORS = {
-    (1.0, 0.0, 0.0): "red",
-    (0.0, 1.0, 0.0): "green",
-    (0.0, 0.0, 1.0): "blue",
-    (0.0, 1.0, 1.0): "cyan",
-    (1.0, 1.0, 0.0): "yellow",
-    (1.0, 0.0, 1.0): "magenta",
-    (0.0, 0.0, 0.0): "black",
-    (1.0, 1.0, 1.0): "gray",
-}
 
 
 @napari_hook_implementation(trylast=True)
@@ -158,12 +147,46 @@ def read_bioformats(path, split_channels=True, java_memory="1024m"):
         "channel_axis": axes.index("c") if split_channels and "c" in axes else None,
         "name": str(_meta.getImageName(0)),
         "scale": scale,
+        "metadata": {
+            "ome_types": lru_cache(maxsize=1)(lambda: ome_types.from_xml(xml))
+        },
     }
-    # if meta.get("channel_axis") and reader.colors:
-    #     meta["colormap"] = [_PRIMARY_COLORS.get(c) for c in reader.colors]
+    if meta.get("channel_axis") is not None:
+        names = []
+        colormaps = []
+        for x in range(reader.sizes.get("c", 0)):
+            names.append(str(_meta.getChannelName(0, x)) + f": {meta['name']}")
+            jclr = _meta.getChannelColor(0, x)
+            rgb = _jrgba_to_rgb(jclr.getValue()) if jclr else (1.0, 1.0, 1.0)
+            cmap = _PRIMARY_COLORS.get(rgb)
+            if cmap is None:
+                with suppress(ImportError):
+                    from napari.utils.colormaps import Colormap
 
-    meta["metadata"] = {
-        "ome_types": lru_cache(maxsize=1)(lambda: ome_types.from_xml(xml))
-    }
+                    cmap = Colormap([[0, 0, 0], rgb])
+            colormaps.append(cmap)
+        meta["name"] = names or meta["name"]
+        if colormaps:
+            meta["colormap"] = colormaps
 
     return [(reader[0], meta)]
+
+
+_PRIMARY_COLORS = {
+    (1.0, 0.0, 0.0): "red",
+    (0.0, 1.0, 0.0): "green",
+    (0.0, 0.0, 1.0): "blue",
+    (0.0, 1.0, 1.0): "cyan",
+    (1.0, 1.0, 0.0): "yellow",
+    (1.0, 0.0, 1.0): "magenta",
+    (0.0, 0.0, 0.0): "black",
+    (1.0, 1.0, 1.0): "gray",
+}
+
+
+def _jrgba_to_rgb(rgba):
+    return (
+        (rgba >> 24 & 255) / 255.0,
+        (rgba >> 16 & 255) / 255.0,
+        (rgba >> 8 & 255) / 255.0,
+    )
