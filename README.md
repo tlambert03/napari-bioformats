@@ -14,9 +14,9 @@ Bioformats plugin for napari using
 
 ## Use this plugin as a fallback!
 
-Anyone coming to napari from the Fiji/ImageJ world will likely be aware of the 
+Anyone coming to napari from the Fiji/ImageJ world will likely be aware of the
 _incredible_ [Bio-Formats](https://docs.openmicroscopy.org/bio-formats/6.6.1/index.html)
-library.  A heroic effort, built over years, to read 
+library.  A heroic effort, built over years, to read
 [more than a 100 file formats](https://docs.openmicroscopy.org/bio-formats/6.6.1/supported-formats.html).  Naturally, we want some of that goodness for `napari` ... hence this plugin.
 
 **However:** it's important to note that this plugin _still_

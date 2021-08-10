@@ -1,5 +1,4 @@
 from qtpy.QtCore import QEventLoop, QFile, QUrl
-from qtpy.QtGui import QValidator
 from qtpy.QtNetwork import QNetworkAccessManager, QNetworkRequest
 from qtpy.QtWidgets import (
     QDialog,
