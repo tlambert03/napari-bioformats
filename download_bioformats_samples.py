@@ -1,6 +1,7 @@
-import requests
 from pathlib import Path
 from zipfile import ZipFile
+
+import requests
 
 BASE = "https://samples.scif.io/"
 FILES = [
@@ -32,4 +33,5 @@ if __name__ == "__main__":
     dest = sys.argv[1] if len(sys.argv) > 1 else DEST_DIR
     for f in FILES:
         download_url(BASE + f, dest)
-    [p.unlink() for p in Path(dest).glob("*.txt")]
+    for p in Path(dest).glob("*.txt"):
+        p.unlink()

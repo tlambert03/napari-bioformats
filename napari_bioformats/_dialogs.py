@@ -62,8 +62,8 @@ def _show_jdk_message():
         msg = (
             "napari-bioformats requires a java but could not detect it in your "
             f"environment.\n\nIt looks like you are running in a conda environment "
-            f"({env_name!r}).  Would you like to install 'openjdk' from the conda-forge "
-            "channel?\n\n"
+            f"({env_name!r}).  Would you like to install 'openjdk' from the "
+            "conda-forge channel?\n\n"
             "(You may also install java manually and set the JAVA_HOME environment "
             "variable properly)."
         )
@@ -103,10 +103,10 @@ def download_loci_jar(v="latest"):
             loc.mkdir(exist_ok=True)
             break
     else:
-        raise IOError(
+        raise OSError(
             "No writeable location found. In order to use the Bioformats reader, "
-            f"please download loci_tools.jar ({url}) to one of the following locations:\n"
-            f"{list(_gen_jar_locations())}."
+            f"please download loci_tools.jar ({url}) to one of the following "
+            f"locations:\n{list(_gen_jar_locations())}."
         )
 
     d = DownloadDialog(parent=_get_current_window())
@@ -121,7 +121,7 @@ def download_loci_jar(v="latest"):
     loci_tools = bytes(d.reply.readAll())
     sha1_checksum = urlopen(url + ".sha1").read().split(b" ")[0].decode()
     if hashlib.sha1(loci_tools).hexdigest() != sha1_checksum:
-        raise IOError(
+        raise OSError(
             "Downloaded loci_tools.jar has invalid checksum. Please try again."
         )
 

@@ -1,10 +1,12 @@
-from pathlib import Path
 import sys
-import napari_bioformats
+from pathlib import Path
+
 import numpy as np
 import pytest
-from napari_bioformats import napari_get_reader
 from ome_types import OME
+
+import napari_bioformats
+from napari_bioformats import napari_get_reader
 
 root = Path(napari_bioformats.__file__).parent.parent
 data = root / "sample_data"
@@ -20,4 +22,4 @@ def test_reader(fname, monkeypatch):
     assert callable(reader)
     ((data, meta),) = reader(fname)
     assert isinstance(data, np.ndarray)
-    assert isinstance(meta["metadata"]['ome_types'](), OME)
+    assert isinstance(meta["metadata"]["ome_types"](), OME)
