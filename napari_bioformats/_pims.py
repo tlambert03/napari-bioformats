@@ -159,9 +159,11 @@ def read_bioformats(path, split_channels=True, java_memory="1024m"):
         "name": str(_meta.getImageName(0)),
         "scale": scale,
     }
-    if meta.get("channel_axis") and reader.colors:
-        meta["colormap"] = [_PRIMARY_COLORS.get(c) for c in reader.colors]
+    # if meta.get("channel_axis") and reader.colors:
+    #     meta["colormap"] = [_PRIMARY_COLORS.get(c) for c in reader.colors]
 
-    meta["metadata"] = lru_cache(maxsize=1)(lambda: ome_types.from_xml(xml))
+    meta["metadata"] = {
+        "ome_types": lru_cache(maxsize=1)(lambda: ome_types.from_xml(xml))
+    }
 
     return [(reader[0], meta)]

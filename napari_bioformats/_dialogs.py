@@ -47,7 +47,7 @@ class CondaInstaller(QDialog):
         self.reject()
 
     def install(self, env, *packages):
-        self.process.setArguments(["install", "--name", env] + list(packages))
+        self.process.setArguments(["install", "-y", "--name", env] + list(packages))
         self._output_widget.clear()
         self.process.start()
 
