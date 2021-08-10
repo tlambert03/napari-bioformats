@@ -72,4 +72,4 @@ class DownloadDialog(QDialog):
         if self.reply.isRunning():
             loop = QEventLoop()
             self.reply.finished.connect(loop.quit)
-            loop.exec()
+            loop.exec_()

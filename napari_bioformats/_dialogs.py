@@ -70,7 +70,7 @@ def _show_jdk_message():
         if QMessageBox.question(parent, "No JVM found", msg) == QMessageBox.Yes:
             conda_dialog = CondaInstaller()
             conda_dialog.install(env_name, "openjdk")
-            if conda_dialog.exec() == QDialog.Accepted:
+            if conda_dialog.exec_() == QDialog.Accepted:
                 os.environ["JAVA_HOME"] = prefix
                 return True
     else:
