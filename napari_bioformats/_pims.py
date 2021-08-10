@@ -1,7 +1,7 @@
-from pathlib import Path
 from functools import lru_cache
-import ome_types
+from pathlib import Path
 
+import ome_types
 from napari_plugin_engine import napari_hook_implementation
 
 # fmt: off
