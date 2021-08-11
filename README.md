@@ -59,7 +59,7 @@ depend on your internet connection). Subsequent files should open more quickly.
 
 ## License
 
-Distributed under the terms of the [BSD-3] license,
+Distributed under the terms of the [GPLv3] license,
 "napari-bioformats" is free and open source software
 
 ## Issues
@@ -71,7 +71,7 @@ _This [napari] plugin was generated with [Cookiecutter] using with [@napari]'s [
 [napari]: https://github.com/napari/napari
 [Cookiecutter]: https://github.com/audreyr/cookiecutter
 [@napari]: https://github.com/napari
-[BSD-3]: http://opensource.org/licenses/BSD-3-Clause
+[GPLv3]: https://opensource.org/licenses/GPL-3.0
 [cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin
 [file an issue]: https://github.com/tlambert03/napari-bioformats/issues
 [napari]: https://github.com/napari/napari
