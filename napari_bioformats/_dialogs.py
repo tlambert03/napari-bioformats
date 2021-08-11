@@ -1,8 +1,6 @@
 """Routines for finding java and loci_tools"""
 import os
-from pathlib import Path
 
-from pims.bioformats import _gen_jar_locations
 from qtpy.QtCore import QProcess, QProcessEnvironment
 from qtpy.QtWidgets import QDialog, QPushButton, QTextEdit, QVBoxLayout
 
@@ -81,50 +79,3 @@ def _show_jdk_message():
         )
         QMessageBox.information(parent, "No JVM found", msg)
     return False
-
-
-def download_loci_jar(v="latest"):
-    import hashlib
-    from urllib.request import urlopen
-
-    from ._downloader import DownloadDialog
-
-    url = (
-        f"https://downloads.openmicroscopy.org/bio-formats/{v}/artifacts/loci_tools.jar"
-    )
-
-    for loc in _gen_jar_locations():
-        # check if dir exists and has write access:
-        loc = Path(loc)
-        if loc.exists() and os.access(loc, os.W_OK):
-            break
-        # if directory is pims and it does not exist, so make it (if allowed)
-        if loc.name == "pims" and os.access(loc.parent, os.W_OK):
-            loc.mkdir(exist_ok=True)
-            break
-    else:
-        raise OSError(
-            "No writeable location found. In order to use the Bioformats reader, "
-            f"please download loci_tools.jar ({url}) to one of the following "
-            f"locations:\n{list(_gen_jar_locations())}."
-        )
-
-    d = DownloadDialog(parent=_get_current_window())
-    d.help_text.setText("Downloading Bioformats. This will only happen once")
-    d.help_text.show()
-    d.show()
-    d.download(url)
-    d.wait()
-    if not d.reply.isReadable():
-        return False
-
-    loci_tools = bytes(d.reply.readAll())
-    sha1_checksum = urlopen(url + ".sha1").read().split(b" ")[0].decode()
-    if hashlib.sha1(loci_tools).hexdigest() != sha1_checksum:
-        raise OSError(
-            "Downloaded loci_tools.jar has invalid checksum. Please try again."
-        )
-
-    with open(loc / "loci_tools.jar", "wb") as output:
-        output.write(loci_tools)
-    return True
