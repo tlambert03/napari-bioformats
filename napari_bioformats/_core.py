@@ -54,17 +54,6 @@ def napari_get_reader(path):
     return None
 
 
-def download_jar():
-    try:
-        from ._dialogs import download_loci_jar
-
-        return download_loci_jar("latest")
-    except ImportError:
-        from pims.bioformats import download_jar
-
-        return download_jar("latest")
-
-
 def _load_loci():
     import jpype
 
