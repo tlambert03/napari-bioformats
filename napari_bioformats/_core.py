@@ -128,7 +128,7 @@ lock = threading.Lock()
 def _load_block(rdr, block_info: dict) -> np.ndarray:
     """Load a single plane with a loci reader"""
     info = block_info[None]
-    print("LOAD", block_info)
+    print("LOAD", info)
     idx = rdr.getIndex(*info["chunk-location"][2::-1])  # Z, C, T
     with lock:
         im = np.frombuffer(rdr.openBytes(idx)[:], dtype=info["dtype"]).copy()
@@ -216,7 +216,7 @@ def read_bioformats(path, split_channels=True):
         if colormaps:
             meta["colormap"] = colormaps
 
-    return [(_reader2dask(reader), meta)]
+    return [(_reader2dask(reader).compute(), meta)]
 
 
 _PRIMARY_COLORS = {
