@@ -1,9 +1,16 @@
+import threading
 from contextlib import suppress
 from functools import lru_cache
 from pathlib import Path
+from typing import Tuple, Union
 
+import dask.array as da
+import numpy as np
 import ome_types
+from napari.utils import resize_dask_cache
 from napari_plugin_engine import napari_hook_implementation
+
+resize_dask_cache()
 
 JAVA_MEMORY = "1024m"
 # fmt: off
@@ -57,6 +64,8 @@ def napari_get_reader(path):
 def _load_loci():
     import jpype
 
+    # Start java VM and initialize logger (globally)
+
     if not jpype.isJVMStarted():
         jpype.startJVM(
             jpype.getDefaultJVMPath(),
@@ -69,6 +78,62 @@ def _load_loci():
         log4j.BasicConfigurator.configure()
         log4j_logger = log4j.Logger.getRootLogger()
         log4j_logger.setLevel(log4j.Level.ERROR)
+
+    if not jpype.isThreadAttachedToJVM():
+        jpype.attachThreadToJVM()
+
+    return jpype.JPackage("loci")
+
+
+def _get_loci_reader(path, meta=False):
+    loci = _load_loci()
+    rdr = loci.formats.ChannelSeparator(loci.formats.ChannelFiller())
+    if meta:
+        _meta = loci.formats.MetadataTools.createOMEXMLMetadata()
+        rdr.setMetadataStore(_meta)
+    rdr.setId(str(path))
+    return (rdr, _meta) if meta else rdr
+
+
+_FMT_2_DTYPE = {
+    0: "i1",  # int8
+    1: "u1",  # uint8
+    2: "i2",  # int16
+    3: "u2",  # uint16
+    4: "i4",  # int32
+    5: "u4",  # uint32
+    6: "f4",  # float32
+    7: "f8",  # float64
+}
+
+
+def _get_shape_dtype(rdr) -> Tuple[Tuple[int, int, int, int, int], str]:
+    """Returns shape (TCZYX) and dtype of rdr"""
+    shape = (
+        rdr.getSizeT(),
+        rdr.getRGBChannelCount() if rdr.isRGB() else rdr.getSizeC(),
+        rdr.getSizeZ(),
+        rdr.getSizeY(),
+        rdr.getSizeX(),
+    )
+    le = rdr.isLittleEndian()
+    pixel_type = ("<" if le else ">") + _FMT_2_DTYPE[rdr.getPixelType()]
+    return shape, pixel_type
+
+
+# TODO: figure this out with dask
+lock = threading.Lock()
+
+
+def _load_block(rdr, block_info: dict) -> np.ndarray:
+    """Load a single plane with a loci reader"""
+    info = block_info[None]
+    print("LOAD", block_info)
+    idx = rdr.getIndex(*info["chunk-location"][2::-1])  # Z, C, T
+    with lock:
+        im = np.frombuffer(rdr.openBytes(idx)[:], dtype=info["dtype"]).copy()
+    im.shape = info["shape"][-2:]
+    return im[np.newaxis, np.newaxis, np.newaxis]
 
 
 def read_bioformats(path, split_channels=True):
@@ -90,14 +155,10 @@ def read_bioformats(path, split_channels=True):
         layer_type=="image" if not provided
     """
     import jpype
-    from pims.bioformats import BioformatsReader
-
-    # Start java VM and initialize logger (globally)
-    _load_loci()
 
     # load all files into array
     try:
-        reader = BioformatsReader(path, meta=False, read_mode="jpype")
+        reader, loci_meta = _get_loci_reader(path, meta=True)
     except jpype.JVMNotFoundException as e:
         try:
             from ._dialogs import _show_jdk_message
@@ -112,24 +173,12 @@ def read_bioformats(path, split_channels=True):
             "please install java and try again."
         ) from e
 
-    # The bundle_axes property defines which axes will be present in a single frame.
-    # The frame_shape property is changed accordingly:
-    axes = [ax for ax in "tczyx" if ax in reader.axes]
-    # stack arrays into single array
-    reader.bundle_axes = axes
-
-    loci = jpype.JPackage("loci")
-    _meta = loci.formats.MetadataTools.createOMEXMLMetadata()
-    reader.rdr.close()
-    reader.rdr.setMetadataStore(_meta)
-    reader.rdr.setId(reader.filename)
-    xml = str(_meta.dumpXML())
-
+    axes = "tczyx"
     try:
         _sizes = {
-            "z": _meta.getPixelsPhysicalSizeZ(0).value(),
-            "y": _meta.getPixelsPhysicalSizeY(0).value(),
-            "x": _meta.getPixelsPhysicalSizeX(0).value(),
+            "z": loci_meta.getPixelsPhysicalSizeZ(0).value(),
+            "y": loci_meta.getPixelsPhysicalSizeY(0).value(),
+            "x": loci_meta.getPixelsPhysicalSizeX(0).value(),
             "t": 1,
             "c": 1,
         }
@@ -139,19 +188,22 @@ def read_bioformats(path, split_channels=True):
         scale = None
 
     meta = {
-        "channel_axis": axes.index("c") if split_channels and "c" in axes else None,
-        "name": str(_meta.getImageName(0)),
+        "channel_axis": 1 if split_channels else None,
+        "name": str(loci_meta.getImageName(0)),
         "scale": scale,
         "metadata": {
-            "ome_types": lru_cache(maxsize=1)(lambda: ome_types.from_xml(xml))
+            "ome_types": lru_cache(maxsize=1)(
+                lambda: ome_types.from_xml(loci_meta.dumpXML())
+            )
         },
     }
+
     if meta.get("channel_axis") is not None:
         names = []
         colormaps = []
-        for x in range(reader.sizes.get("c", 0)):
-            names.append(str(_meta.getChannelName(0, x)) + f": {meta['name']}")
-            jclr = _meta.getChannelColor(0, x)
+        for x in range(reader.getSizeC()):
+            names.append(str(loci_meta.getChannelName(0, x)) + f": {meta['name']}")
+            jclr = loci_meta.getChannelColor(0, x)
             rgb = _jrgba_to_rgb(jclr.getValue()) if jclr else (1.0, 1.0, 1.0)
             cmap = _PRIMARY_COLORS.get(rgb)
             if cmap is None:
@@ -164,7 +216,7 @@ def read_bioformats(path, split_channels=True):
         if colormaps:
             meta["colormap"] = colormaps
 
-    return [(reader[0], meta)]
+    return [(_reader2dask(reader), meta)]
 
 
 _PRIMARY_COLORS = {
@@ -246,3 +298,18 @@ def download_loci_jar(v="latest", loc=Path(__file__).parent):
     with open(loc / "loci_tools.jar", "wb") as output:
         output.write(loci_tools)
     return True
+
+
+def dask_bioformats(path: Union[str, Path] = None) -> da.Array:
+    # not used internally
+    return _reader2dask(_get_loci_reader(path))
+
+
+def _reader2dask(rdr):
+    (nt, nc, nz, ny, nx), dtype = _get_shape_dtype(rdr)
+    return da.map_blocks(
+        _load_block,
+        rdr,
+        chunks=((1,) * nt, (1,) * nc, (1,) * nz, (ny,), (nx,)),
+        dtype=dtype,
+    )
