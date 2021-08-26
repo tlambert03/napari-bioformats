@@ -62,19 +62,16 @@ def _load_loci():
     import jpype
 
     # Start java VM and initialize logger (globally)
-
     if not jpype.isJVMStarted():
         jpype.startJVM(
             jpype.getDefaultJVMPath(),
             "-ea",
-            f"-Djava.class.path={Path(__file__).parent / 'loci_tools.jar'}",
+            f"-Djava.class.path={Path(__file__).parent / 'bioformats.jar'}",
             "-Xmx" + JAVA_MEMORY,
             convertStrings=False,
         )
-        log4j = jpype.JPackage("org.apache.log4j")
-        log4j.BasicConfigurator.configure()
-        log4j_logger = log4j.Logger.getRootLogger()
-        log4j_logger.setLevel(log4j.Level.ERROR)
+        loci = jpype.JPackage("loci")
+        loci.common.DebugTools.setRootLevel("ERROR")
 
     if not jpype.isThreadAttachedToJVM():
         jpype.attachThreadToJVM()
