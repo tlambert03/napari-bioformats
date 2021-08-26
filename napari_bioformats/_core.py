@@ -2,15 +2,12 @@ import threading
 from contextlib import suppress
 from functools import lru_cache
 from pathlib import Path
-from typing import Tuple, Union
+from typing import Tuple
 
 import dask.array as da
 import numpy as np
 import ome_types
-from napari.utils import resize_dask_cache
 from napari_plugin_engine import napari_hook_implementation
-
-resize_dask_cache()
 
 JAVA_MEMORY = "1024m"
 # fmt: off
@@ -128,7 +125,6 @@ lock = threading.Lock()
 def _load_block(rdr, block_info: dict) -> np.ndarray:
     """Load a single plane with a loci reader"""
     info = block_info[None]
-    print("LOAD", info)
     idx = rdr.getIndex(*info["chunk-location"][2::-1])  # Z, C, T
     with lock:
         im = np.frombuffer(rdr.openBytes(idx)[:], dtype=info["dtype"]).copy()
@@ -216,7 +212,7 @@ def read_bioformats(path, split_channels=True):
         if colormaps:
             meta["colormap"] = colormaps
 
-    return [(_reader2dask(reader).compute(), meta)]
+    return [(_reader2dask(reader), meta)]
 
 
 _PRIMARY_COLORS = {
@@ -298,11 +294,6 @@ def download_loci_jar(v="latest", loc=Path(__file__).parent):
     with open(loc / "loci_tools.jar", "wb") as output:
         output.write(loci_tools)
     return True
-
-
-def dask_bioformats(path: Union[str, Path] = None) -> da.Array:
-    # not used internally
-    return _reader2dask(_get_loci_reader(path))
 
 
 def _reader2dask(rdr):
