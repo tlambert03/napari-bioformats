@@ -1,6 +1,7 @@
 import sys
 from pathlib import Path
 
+import dask.array as da
 import numpy as np
 import pytest
 from ome_types import OME
@@ -21,5 +22,5 @@ def test_reader(fname, monkeypatch):
     reader = napari_get_reader(str(fname))
     assert callable(reader)
     ((data, meta),) = reader(fname)
-    assert isinstance(data, np.ndarray)
+    assert isinstance(data, (np.ndarray, da.Array))
     assert isinstance(meta["metadata"]["ome_types"](), OME)

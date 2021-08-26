@@ -73,8 +73,13 @@ def _load_loci():
         loci = jpype.JPackage("loci")
         loci.common.DebugTools.setRootLevel("ERROR")
 
-    if not jpype.isThreadAttachedToJVM():
-        jpype.attachThreadToJVM()
+    try:
+        java_lang = jpype.JPackage("java").lang
+        if not java_lang.Thread.isAttached():
+            java_lang.Thread.attach()
+    except Exception:
+        if not jpype.isThreadAttachedToJVM():
+            jpype.attachThreadToJVM()
 
     return jpype.JPackage("loci")
 
@@ -186,7 +191,7 @@ def read_bioformats(path, split_channels=True):
         "scale": scale,
         "metadata": {
             "ome_types": lru_cache(maxsize=1)(
-                lambda: ome_types.from_xml(loci_meta.dumpXML())
+                lambda: ome_types.from_xml(str(loci_meta.dumpXML()))
             )
         },
     }
