@@ -7,6 +7,10 @@
 [![tests](https://github.com/tlambert03/napari-bioformats/workflows/tests/badge.svg)](https://github.com/tlambert03/napari-bioformats/actions)
 [![codecov](https://codecov.io/gh/tlambert03/napari-bioformats/branch/master/graph/badge.svg)](https://codecov.io/gh/tlambert03/napari-bioformats)
 
+
+| :exclamation: [napari-aicsimageio](https://github.com/AllenCellModeling/napari-aicsimageio) now has a bioformats reader; please try that instead. napari-bioformats will soon be archived. |
+|-----------------------------------------|
+
 Bioformats plugin for napari using
 [pims-bioformats](http://soft-matter.github.io/pims/v0.5/bioformats.html)
 
